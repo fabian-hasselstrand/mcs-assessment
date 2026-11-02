@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Tell MCS Robotics about your container washing operation. We will use your assessment to prepare a site-specific business case and pricing proposal.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0b0b0b">
+  <title>Container Cleaning Assessment | MCS Robotics</title>
+  <link rel="icon" href="assets/favicon.ico" sizes="48x48">
+  <link rel="preload" href="assets/fonts/syncopate-bold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to questionnaire</a>
+  <!-- Netlify discovers this static schema at deploy time. These names match the AJAX payload. -->
+  <form name="mcs-assessment" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+    <input type="hidden" name="form-name" value="mcs-assessment">
+    <input name="bot-field">
+    <input name="company"><input name="site"><input name="name"><input name="email" type="email">
+    <input name="submission_id"><input name="version">
+    <textarea name="assessment_summary"></textarea>
+    <textarea name="assessment_json"></textarea>
+  </form>
+  <div id="app"></div>
+  <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <dialog id="photo-dialog" class="photo-dialog" aria-labelledby="photo-title">
+    <div class="dialog-bar"><h2 id="photo-title"></h2><button class="btn" data-action="close-photo">Close ×</button></div>
+    <img id="photo-large" alt="">
+  </dialog>
+  <dialog id="reset-dialog" class="reset-dialog" aria-labelledby="reset-title">
+    <h2 id="reset-title">Start a new assessment?</h2>
+    <p>This clears the answers saved in this browser. Download a copy first if you want to keep them. It does not remove an assessment already submitted to MCS.</p>
+    <div class="button-row"><button class="btn" data-action="cancel-reset">Keep my answers</button><button class="btn primary" data-action="confirm-reset">Clear & start again</button></div>
+  </dialog>
+  <noscript><main class="noscript"><h1>MCS Robotics</h1><p>Please enable JavaScript to complete the interactive assessment. For help, contact <a href="mailto:fabian@mcsrobotics.com">fabian@mcsrobotics.com</a>.</p></main></noscript>
+</body>
+</html>
