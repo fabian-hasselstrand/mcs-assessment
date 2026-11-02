@@ -26,7 +26,7 @@ Existing drafts retain their unchanged answers. Earlier “Other” percentages,
 
 ## Customer invitation
 
-**Subject:** MCS container cleaning assessment — [Terminal / Site]
+**Subject:** MCS operational assessment — [Terminal / Site]
 
 Hi [Name],
 
