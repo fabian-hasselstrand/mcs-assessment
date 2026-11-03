@@ -19,8 +19,8 @@ for(const model of models)test(`${model}: complete navigation and branch changes
  await nav(page,2);await expect(page.locator('#question-F03')).toHaveCount(model.startsWith('external')?1:0);await expect(page.locator('#question-L02')).toHaveCount(model==='internal'?1:0);
  await page.locator('#shift-0-hours').fill('8');await page.getByRole('button',{name:'+ Add another shift'}).click();await expect(page.locator('#shift-1-hours')).toBeVisible();
  await page.getByRole('button',{name:'Remove shift 2'}).click();await expect(page.locator('#shift-1-hours')).toHaveCount(0);
- await nav(page,3);await radio(page,'V05','services','drying');await expect(page.locator('#question-V06')).toBeVisible();
- await radio(page,'V05','services','none');await expect(page.locator('#question-V06')).toHaveCount(0);
+ await nav(page,3);await radio(page,'V05','services','drying');await expect(page.locator('#V05-drying_monthly')).toBeVisible();
+ await radio(page,'V05','services','none');await expect(page.locator('#V05-drying_monthly')).toHaveCount(0);
  await nav(page,4);await expect(page.locator('.error-summary')).toHaveCount(0);await expect(page.locator('.metrics')).toContainText('400');
  await page.getByRole('button',{name:'Submit assessment'}).click();await expect(page.locator('#toast')).toContainText('local preview');
 });
@@ -123,7 +123,7 @@ test('revised chemical, container and handling fields export the current data',a
  expect(data.derived.chemical_use_percent).toBe(35);expect(data.answers.O08.oog).toBe('30');expect(data.derived.reach_stacker_combined_hourly_cost).toBe(750);
  expect(data.answers.L03).toEqual({bottleneck_details:'Reach-stacker availability.'});expect(data.answers.O02.future).toBeUndefined();
  expect(data.answers.F04).toBeUndefined();expect(data.comments.F04).toBeUndefined();expect(data.answers.V05.services).toContain('recycling');
- expect(data.format).toBe('mcs-container-wash-assessment-v3.1');
+ expect(data.format).toBe('mcs-container-wash-assessment-v3.3');
 });
 test('changing to no current operation hides layout, cycle and handling questions',async({page})=>{
  await seed(page,{O01:{model:'internal'},O02:{position:'ground'},H01:{cost_basis:'hour',hourly_cost:'400'},L02:{cycle_regular:'20'}},1);
@@ -135,4 +135,21 @@ test('old draft values with changed meanings are flagged instead of relabelled',
  await seed(page,{O01:{model:'internal'},O02:{position:'ground'},O08:{dry20:'90',other:'10',other_type:'Tank'},L02:{regular:'10',people:'2'},H01:{machine_rate:'300',operator_rate:'100'}},1);
  await expect(page.locator('#O08-oog')).toHaveValue('');await expect(page.locator('#question-O08 .revision-note')).toContainText('10% under Other');
  await nav(page,2);await expect(page.locator('#L02-cycle_regular')).toHaveValue('');await expect(page.locator('#question-L02 .revision-note')).toBeVisible();await expect(page.locator('#question-H01 .revision-note')).toBeVisible();
+});
+
+test('simplified demand questions retain text and export only selected service estimates',async({page})=>{
+ await page.setViewportSize({width:375,height:812});
+ await seed(page,{O01:{model:'internal'},O04:{monthly:'400'},V01:{demand:'no'},V03:{interruptions:'no'},V03A:{cost_monthly:'999'},V04:{count:'12'}},3);
+ await expect(page.locator('#question-V03A input[type="number"]')).toHaveCount(0);
+ await page.locator('#V03A-details').fill('Storage and extra handling, roughly 500 per month.');
+ await page.locator('#V04-percentage').fill('2.5');
+ for(const service of ['drying','inspection','proof']){await radio(page,'V05','services',service);await page.locator(`#V05-${service}_monthly`).fill('100');}
+ await expect(page.locator('#question-V06, #question-V07, #question-V08')).toHaveCount(0);
+ await expect(page.locator('#question-V05')).not.toContainText('Active drying');
+ expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+ await page.locator('#section-jump').selectOption('4');await expect(page.locator('.review-group').last()).toContainText('2.5 %');
+ const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'Download answers'}).click();const download=await downloadPromise;
+ const data=JSON.parse(await readFile(await download.path(),'utf8'));
+ expect(data.answers.V03A).toEqual({details:'Storage and extra handling, roughly 500 per month.'});expect(data.answers.V04).toEqual({percentage:'2.5'});
+ expect(data.answers.V05.drying_monthly).toBe('100');expect(data.answers.V06).toBeUndefined();expect(data.derived.cleaning_constraint_costs).toBeUndefined();
 });

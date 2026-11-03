@@ -33,7 +33,7 @@ Form setup reference: [Netlify Forms documentation](https://docs.netlify.com/man
 
 The local preview does not submit. An unprocessed Netlify form is also blocked, rather than showing an incorrect success state. Live receipt remains a deployment check: local tests simulate the endpoint and do not submit data externally.
 
-The server receives company, site, name, email, a submission reference, a readable `assessment_summary`, and a structured `assessment_json`. The latter uses format `mcs-container-wash-assessment-v3.1` and includes active answers, active comments, question labels, baseline indicators, validation checks and modelling assumptions. It is suitable as input to MCS's business case/pricing workflow; this questionnaire itself does not issue a quote or calculate robotic savings.
+The server receives company, site, name, email, a submission reference, a readable `assessment_summary`, and a structured `assessment_json`. The latter uses format `mcs-container-wash-assessment-v3.3` and includes active answers, active comments, question labels, baseline indicators, validation checks and modelling assumptions. It is suitable as input to MCS's business case/pricing workflow; this questionnaire itself does not issue a quote or calculate robotic savings.
 
 ## Behaviour
 
@@ -44,6 +44,9 @@ The server receives company, site, name, email, a submission reference, a readab
 - Cleaning cycle time is elapsed time until the container is clean, separate from staff working hours. Throughput bottlenecks are described in free text.
 - Reach-stacker costs combine machine and operator. A cost per shift is divided by the entered shift length for the exported hourly rate. No handling cost is automatically added to an all-in baseline.
 - Closed-loop water recycling is an optional operational improvement. The outgoing cleaning selling-price question has been removed.
+- Unmet demand is separate from containers eventually cleaned after a delay. Interruptions capture affected operating days and containers per year. Delay costs and operational effects are described in one optional text field, without automatic cost calculations.
+- Claims and rejections are recorded as an approximate percentage of cleaned containers. Each affected container is counted once.
+- Drying, digital interior inspection and cleaning documentation each have one approximate monthly container estimate within V05. Separate service follow-ups, pricing and process questions have been removed. Previous monthly estimates are carried into the matching V05 fields.
 - Company, terminal, country, currency, contact name, email and wash arrangement are required for submission. Operational and financial estimates can be left blank or marked unknown.
 - Impossible numeric ranges and incorrect container percentage totals block submission. Consistency checks are advisory: seasonality and estimates may explain differences.
 - Drafts persist in this browser profile. Drafts from earlier versions are read automatically. Values with changed meanings are flagged for review, not silently converted (for example, Other is not assumed to mean OOG). Drafts do not sync across devices.

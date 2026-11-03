@@ -52,11 +52,11 @@ test('changing parent answers hides chemical and heavy-residue detail in exports
  assert.ok(fields(m,'L02').includes('cycle_heavy'));m.setAnswer('O10','heavy','0');m.setAnswer('O06','chemicals','no');
  assert.ok(!fields(m,'L02').includes('cycle_heavy'));assert.equal(m.activeAnswers().O06.chemical_names,undefined);assert.equal(m.activeAnswers().L02.cycle_heavy,undefined);
 });
-test('service questions follow selected services and omit inactive revenue',()=>{
- const m=make({O01:{model:'internal'},V05:{services:['drying','inspection','proof']},V08:{billing:'separate',price:'25'}});
- for(const id of ['V06','V07','V08'])assert.ok(ids(m).includes(id));
- m.setAnswer('V08','billing','included');assert.equal(m.activeAnswers().V08.price,undefined);
- m.setAnswer('V05','services',['none']);for(const id of ['V06','V07','V08'])assert.ok(!ids(m).includes(id));
+test('service estimates move into V05 and retired follow-ups stay out of exports',()=>{
+ const m=make({O01:{model:'internal'},V05:{services:['drying','inspection','proof']},V06:{monthly:'30',price:'10'},V07:{monthly:'20'},V08:{monthly:'15',billing:'separate',price:'25'}});
+ for(const id of ['V06','V07','V08']){assert.ok(!ids(m).includes(id));assert.equal(m.activeAnswers()[id],undefined);}
+ assert.equal(m.activeAnswers().V05.drying_monthly,'30');assert.equal(m.activeAnswers().V05.inspection_monthly,'20');assert.equal(m.activeAnswers().V05.proof_monthly,'15');
+ m.setAnswer('V05','services',['none']);assert.equal(m.activeAnswers().V05.drying_monthly,undefined);
 });
 test('validation requires usable contact details but permits unknown financial inputs',()=>{
  const m=make({O01:{model:'internal'}});assert.equal(m.errors().length,0);
@@ -141,4 +141,25 @@ test('water recycling is an operational option with conditional requirements',()
  assert.ok(fields(m,'V05').includes('recycling_requirements'));assert.equal(m.activeAnswers().V05.recycling_requirements,'Reduce discharge');
  for(const id of ['V06','V07','V08'])assert.ok(!ids(m).includes(id));
  m.setAnswer('V05','services',['none']);assert.equal(m.activeAnswers().V05.recycling_requirements,undefined);
+});
+
+test('V03 captures annual affected days and containers and drops inactive detail',()=>{
+ const m=make({O01:{model:'internal'},V03:{interruptions:'yes',days:'12',containers_year:'250',causes:'Freezing weather'}});
+ assert.deepEqual(m.activeAnswers().V03,{interruptions:'yes',days:'12',containers_year:'250',causes:'Freezing weather'});
+ m.setAnswer('V03','days','367');assert.ok(m.errors().some(e=>e.id==='V03'&&e.key==='days'));
+ m.setAnswer('V03','days','0');assert.ok(m.warnings().some(w=>w.startsWith('V03:')));
+ m.setAnswer('V03','interruptions','no');assert.deepEqual(m.activeAnswers().V03,{interruptions:'no'});
+ assert.ok(!m.errors().some(e=>e.id==='V03'));assert.ok(!m.warnings().some(w=>w.startsWith('V03:')));
+});
+test('delay question is free text and ignores retired numeric costs',()=>{
+ const m=make({O01:{model:'internal'},V01:{demand:'no'},V03:{interruptions:'no'},V03A:{details:'Storage costs about 500 per month',cost_monthly:'999',waiting:'yes'}});
+ assert.deepEqual(fields(m,'V03A'),['details']);assert.deepEqual(m.activeAnswers().V03A,{details:'Storage costs about 500 per month'});
+ assert.equal(m.derived().cleaning_constraint_costs,undefined);
+ m.setAnswer('O01','model','none');assert.equal(m.activeAnswers().V03A,undefined);
+});
+test('claims percentage validates without converting old monthly counts',()=>{
+ const m=make({O01:{model:'internal'},V04:{count:'10',cost:'50'}});
+ assert.deepEqual(fields(m,'V04'),['percentage']);assert.equal(m.activeAnswers().V04.percentage,undefined);assert.ok(m.revisionNotes().some(n=>n.id==='V04'));
+ m.setAnswer('V04','percentage','101');assert.ok(m.errors().some(e=>e.id==='V04'));
+ m.setAnswer('V04','percentage','2.5');assert.ok(!m.errors().some(e=>e.id==='V04'));assert.deepEqual(m.activeAnswers().V04,{percentage:'2.5'});
 });

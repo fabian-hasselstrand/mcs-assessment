@@ -110,33 +110,37 @@ N('extra','Additional cost retained by your terminal, if any','per wash')],
 {when:external,hint:'Use the supplier invoice or contract amount as the baseline. Do not reconstruct the contractor’s labour, water, chemicals or wastewater costs.'}),
 ]},
 {title:'Demand & priorities',desc:'Capacity constraints, additional options and project priorities.',questions:[
-Q('V01','Do current constraints prevent you from meeting all wash demand?',[
-R('demand','Select one',[['yes','Yes'],['no','No — we meet the current demand'],['unknown','Not sure / not measured']])],{when:current,hint:'Consider weather, staff availability, space, handling and other operational limits. This concerns current versus potential wash volume.'}),
+Q('V01','Do current constraints prevent you from meeting all cleaning demand?',[
+R('demand','Select one',[['yes','Yes'],['no','No — we meet the current demand'],['unknown','Not sure / not measured']])],{when:current,hint:'Include requests turned away or sent elsewhere because of capacity constraints. Containers eventually cleaned after a delay are covered in the waiting-time questions below.'}),
 Q('V02',()=>model()==='none'?'What currently prevents you from providing a wash service?':'How much more wash demand could you serve if those constraints were resolved?',[
 N('additional','Additional containers per month, above the current volume','containers',{when:current,hint:'A rough estimate is fine. Exclude containers already in your monthly total, including those washed later after a delay.'}),
 M('constraints','What currently limits the operation?',[['weather','Weather / freezing'],['staff','Staff shortages / availability'],['space','Insufficient space / wash positions'],['handling','Container handling / access'],['equipment','Wash equipment / capacity'],['wastewater','Wastewater handling'],['hours','Operating hours'],['provider','Contractor availability'],['other','Other'],['unknown','Not sure']]),
-T('reason','Describe the constraints and what happens to the affected containers',{placeholder:'For example: requests are turned away, containers go elsewhere, or washes wait until staff or space become available.'})],{when:()=>model()==='none'||(current()&&['yes','unknown'].includes(v('V01','demand'))),hint:()=>model()==='none'?'The potential monthly volume is already captured in the volume question. Explain what currently prevents that operation.':'Potential volume is your current monthly volume plus the additional demand entered here. This is an opportunity estimate; the business case must consider whether each constraint can actually be resolved.'}),
-Q('V03','Are there recurring wash shutdowns or interruptions?',[
-R('interruptions','Select one',yesno),N('days','Operating days affected per year','days',{max:366,when:()=>v('V03','interruptions')==='yes'}),
-T('causes','Causes and what happens to those containers',{when:()=>v('V03','interruptions')==='yes',placeholder:'Are washes lost, sent elsewhere or completed later? Explain rather than adding them to demand again.'})],{when:current}),
-Q('V04','Do customers reject containers or complain because they are not washed well enough?',[
-R('claims','Select one',yesno),N('count','Rejections / complaints in a typical month','cases',{when:()=>v('V04','claims')==='yes'}),T('nature','What are the complaints, and how are they resolved?',{when:()=>v('V04','claims')==='yes'}),
-N('cost','Average credit / compensation / claim handling cost','per claim',{financial:true,when:()=>v('V04','claims')==='yes'}),R('included','Is this already included in the wash cost you provided?',yesno,{financial:true,when:()=>v('V04','claims')==='yes'})],{when:current,hint:'Count each affected container once, even if a complaint also leads to a rejection. Any future reduction needs evidence before it is counted as a saving.'}),
+T('reason','Describe the constraints and what happens to the affected containers',{placeholder:'For example: requests are turned away or sent elsewhere because staff, equipment or space are unavailable.'})],{when:()=>model()==='none'||(current()&&['yes','unknown'].includes(v('V01','demand'))),hint:()=>model()==='none'?'The potential monthly volume is already captured in the volume question. Explain what currently prevents that operation.':'Potential volume is your current monthly volume plus the additional demand entered here. This is an opportunity estimate; the business case must consider whether each constraint can actually be resolved.'}),
+Q('V03','Are there recurring periods when cleaning is unavailable or interrupted?',[
+R('interruptions','Select one',yesno),
+N('days','Operating days affected per year','days / year',{max:366,when:()=>v('V03','interruptions')==='yes'}),
+N('containers_year','Estimated containers affected per year','containers / year',{when:()=>v('V03','interruptions')==='yes'}),
+T('causes','Main causes and what happens to the affected containers',{when:()=>v('V03','interruptions')==='yes',placeholder:'For example: freezing weather, equipment failure or staff shortages. Are containers left waiting, sent elsewhere or cancelled?'})],
+{when:current,hint:'Include partial-day interruptions. Count each affected container once in the annual estimate. Record the cost of waiting in the next question.'}),
+Q('V03A','What additional costs or operational problems do cleaning delays and stoppages cause?',[
+T('details','Additional costs and operational effects',{placeholder:'For example: storage costs, occupied yard space, extra handling, transport or overtime. If known, describe how often this happens and the approximate cost.'})],{when:current}),
+Q('V04','What percentage of cleaned containers result in claims or rejections?',[
+N('percentage','Containers receiving claims or rejections','%',{max:100})],{when:current,hint:'Include complaints about cleaning quality. Count each container once, even if it receives both a claim and a rejection. An approximate percentage is fine.'}),
 Q('V05','Which additional options would be relevant to your site?',[
-M('services','Select relevant options',[['drying','Active drying'],['inspection','Digital container interior inspection'],['proof','Cleaning documentation / proof of completion'],['recycling','Closed-loop water recycling'],['none','None currently'],['unknown','Not sure']]),
-T('recycling_requirements','Water recycling: current arrangements or requirements',{when:()=>has('V05','services','recycling'),placeholder:'Optional: existing recycling equipment, water supply or discharge constraints, and any specific requirements.'})],{when:()=>!!model(),hint:'Select customer services or operational improvements to assess. Interior inspection is separate from mechanical reefer PTI. Water recycling is assessed for site suitability and operating cost, not as a customer service charge.'}),
-Q('V06','How much demand is there for active drying?',[
-N('monthly','Of the monthly wash volume above, containers that could also be dried','containers / month'),R('today','How is drying handled today?',[['air','Natural / air drying'],['active','Active drying'],['none','No drying'],['other','Other / varies']]),N('time','Typical current drying time','minutes'),N('price','Potential additional charge for active drying','per container',{financial:true}),T('evidence','What customer need or commitment supports this estimate?')],{when:()=>has('V05','services','drying')}),
-Q('V07','How much demand is there for digital interior inspection?',[
-N('monthly','Of the monthly wash volume above, containers that could also be inspected','containers / month'),N('price','Potential additional charge for digital interior inspection','per container',{financial:true}),T('evidence','Current inspection process and customer demand')],{when:()=>has('V05','services','inspection')}),
-Q('V08','How much demand is there for wash documentation?',[
-N('monthly','Of the monthly wash volume above, containers needing documentation','containers / month'),R('billing','Would documentation be included or sold separately?',[['included','Included in the wash service'],['separate','Charged separately'],['unknown','Not sure']]),N('price','Potential additional charge for documentation','per container',{financial:true,when:()=>v('V08','billing')==='separate'}),T('evidence','What records do customers need?')],{when:()=>has('V05','services','proof')}),
+M('services','Select relevant options',[['drying','Drying'],['inspection','Digital container interior inspection'],['proof','Cleaning documentation / proof of completion'],['recycling','Closed-loop water recycling'],['none','None currently'],['unknown','Not sure']]),
+N('drying_monthly','Drying — approximate containers per month','containers / month',{when:()=>has('V05','services','drying')}),
+N('inspection_monthly','Digital interior inspection — approximate containers per month','containers / month',{when:()=>has('V05','services','inspection')}),
+N('proof_monthly','Cleaning documentation — approximate containers per month','containers / month',{when:()=>has('V05','services','proof')}),
+T('recycling_requirements','Water recycling: current arrangements or requirements',{when:()=>has('V05','services','recycling'),placeholder:'Optional: existing recycling equipment, water supply or discharge constraints, and any specific requirements.'})],{when:()=>!!model(),hint:'For each selected service, estimate how many of the containers cleaned per month could use it. The same container can use more than one service. Interior inspection is separate from mechanical reefer PTI.'}),
 Q('V09','What are your main priorities for this project?',[
 M('priorities','Choose up to three priorities',[['cost','Lower wash cost'],['safety','Less human exposure inside containers'],['capacity','More wash capacity'],['quality','More consistent wash quality'],['residues','Ability to wash difficult residues'],['water','Less water / wastewater'],['energy','Lower energy use'],['staff','Less physically demanding work'],['uptime','More reliable availability']],{limit:3}),
 T('success','Any specific targets, concerns or requirements?')],{when:()=>!!model(),hint:'Operational, safety and environmental benefits are reported alongside financial outcomes. They are not automatically converted into cash savings.'})]}
 ];
 if (answers.O06?.chemical_frequency === 'all' && answers.O06.chemical_share == null) answers.O06.chemical_share = '100';
 if (answers.L03?.delays && answers.L03.bottleneck_details == null) answers.L03.bottleneck_details = answers.L03.delays;
+for(const [id,key] of [['V06','drying_monthly'],['V07','inspection_monthly'],['V08','proof_monthly']]){
+ if(!unknown[id]&&answers[id]?.monthly!=null){answers.V05 ||= {};if(answers.V05[key]==null)answers.V05[key]=answers[id].monthly;}
+}
 const reviewStep=sections.length;
 function title(q){return typeof q.title==='function'?q.title():q.title;}
 function fields(q){return (typeof q.fields==='function'?q.fields():q.fields).filter(f=>!f.when||f.when());}
@@ -149,6 +153,8 @@ const filledNumber=x=>x!==''&&x!==null&&x!==undefined&&Number.isFinite(Number(x)
 function answered(q){if(unknown[q.id])return true;if(q.kind==='shifts')return rows().some(r=>r.hours!==''||internal()&&(r.people!==''||r.washes!==''));return fields(q).some(f=>{const z=v(q.id,f.key);return Array.isArray(z)?z.length:typeof z==='string'?z.trim()!=='':z!=='';});}
 function number(id,k){const x=v(id,k);return x!==''&&Number.isFinite(Number(x))?Number(x):null;}
 function activeAnswers(){const out={};for(const q of qs()){if(unknown[q.id]){out[q.id]={status:'unknown'};continue;}if(q.kind==='shifts'){const keys=['period',...shiftFields().map(f=>f[0])];out[q.id]={rows:rows().map(r=>Object.fromEntries(Object.entries(r).filter(([k])=>keys.includes(k))))};continue;}out[q.id]=Object.fromEntries(fields(q).filter(f=>v(q.id,f.key)!=='').map(f=>[f.key,v(q.id,f.key)]));}return out;}
+// Waiting costs describe the existing operation. They are not added to cleaning
+// costs, unmet demand or assumed savings; overlap is retained for MCS to review.
 function derived(){
  const month=number('O04','monthly'),days=number('O04','days');
  const out={monthly_washes:month,annual_washes:month===null?null:month*12,average_washes_per_operating_day:month!==null&&days>0?month/days:null,volume_basis:model()==='none'?'potential demand':'existing washes'};
@@ -191,14 +197,16 @@ if(!unknown.L01&&model()){rows().forEach((r,i)=>{if(r.hours!==''&&(+r.hours<=0||
 if(visible(sections.flatMap(s=>s.questions).find(q=>q.id==='F05'))&&internal()&&v('F05','has_cost')==='yes'&&v('F02','water_includes_sewer')==='yes')w.push('F05: check that annual wastewater costs do not repeat sewer charges included in the water rate.');
 const d=derived();
 if(d.monthly_washes>0&&d.shift_implied_monthly_washes!==null&&d.shift_implied_monthly_washes!==undefined&&Math.abs(d.shift_implied_monthly_washes-d.monthly_washes)/d.monthly_washes>.2)w.push('Monthly volume and typical shift output differ by more than 20%. Explain seasonality or check these estimates.');
-for(const id of ['V06','V07','V08'])if(qs().some(q=>q.id===id)&&number(id,'monthly')!==null&&d.monthly_washes!==null&&number(id,'monthly')>d.monthly_washes)w.push(`${id}: additional-service demand exceeds the monthly wash volume it refers to.`);
+for(const service of ['drying','inspection','proof'])if(has('V05','services',service)&&number('V05',service+'_monthly')!==null&&d.monthly_washes!==null&&number('V05',service+'_monthly')>d.monthly_washes)w.push(`V05: ${service} demand exceeds the monthly cleaning volume it refers to.`);
 if(d.monthly_washes>0&&number('O04','days')===0)w.push('O04: a positive wash volume needs at least one operating day.');
+if(current()&&v('V03','interruptions')==='yes'&&number('V03','days')===0&&number('V03','containers_year')>0)w.push('V03: containers are affected but no operating days are recorded. Include partial days or explain the estimate in the notes.');
 for(const note of revisionNotes())w.push(`${note.id}: ${note.message}`);
 return w;}
 
 function revisionNotes() {
  const notes=[];
  const add=(id,message)=>{if(qs().some(q=>q.id===id)&&!unknown[id])notes.push({id,message});};
+ if(v('V04','count')!==''&&v('V04','percentage')==='')add('V04','Please enter an approximate percentage. The previous monthly count has not been converted.');
  if(number('O08','other')>0&&v('O08','oog')==='')add('O08',`Your previous draft included ${format(number('O08','other'))}% under Other. Confirm the OOG percentage using the categories above; Other has not been relabelled as OOG.`);
  if(internal()&&((v('L02','regular')!==''&&v('L02','cycle_regular')==='')||(number('O10','heavy')>0&&v('L02','heavy')!==''&&v('L02','cycle_heavy')==='')))add('L02','Please enter cleaning cycle times using the definition above. The earlier active-cleaning times have not been reused.');
  if(['machine_hours','operator_hours','machine_rate','operator_rate'].some(key=>v('H01',key)!=='')&&v('H01','cost_basis')===''&&v('H01','handling_hours')==='')add('H01','Please update the handling time and combined machine-and-operator cost. The earlier separate cost entries have not been reused.');
@@ -242,6 +250,6 @@ function reset() { answers={}; comments={}; unknown={}; }
 return { sections, reviewStep, title, fields, visible, qs, rows, shiftPeriods, shiftFields,
  v, a, has, model, internal, external, current, ground, currency, number, format, answered,
  activeAnswers, derived, warnings, errors, revisionNotes, setAnswer, setUnknown, setComment, reset,
- get state() { return {answers,comments,unknown,schemaVersion:'3.1'}; }
+ get state() { return {answers,comments,unknown,schemaVersion:'3.3'}; }
 };
 }
